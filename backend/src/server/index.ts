@@ -28,6 +28,8 @@ async function registerPlugins() {
     'http://localhost:5173',
     /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:5173$/,  // Local network
     /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}:5173$/,  // Alternative local network
+	'https://beer.degooyer.com',
+'http://beer.degooyer.com',
   ];
   
   await fastify.register(cors, {

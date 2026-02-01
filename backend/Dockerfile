@@ -1,5 +1,5 @@
 # Use Node.js 18 Bullseye slim as base
-FROM node:18-bullseye-slim
+FROM node:25-bullseye-slim
 
 # Install Tesseract OCR and dependencies
 RUN apt-get update && apt-get install -y \
