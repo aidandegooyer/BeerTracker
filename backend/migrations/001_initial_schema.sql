@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "unaccent";
 
 -- Beers table
-CREATE TABLE beers (
+CREATE TABLE IF NOT EXISTS beers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     brand TEXT NOT NULL,
     name TEXT NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE beers (
 );
 
 -- Ratings table
-CREATE TABLE ratings (
+CREATE TABLE IF NOT EXISTS ratings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     beer_id UUID NOT NULL REFERENCES beers(id) ON DELETE CASCADE,
     user_id UUID,
@@ -27,7 +27,7 @@ CREATE TABLE ratings (
 );
 
 -- Images table
-CREATE TABLE images (
+CREATE TABLE IF NOT EXISTS images (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     path TEXT NOT NULL,
     source TEXT,
@@ -35,7 +35,7 @@ CREATE TABLE images (
 );
 
 -- Menu parses table
-CREATE TABLE menu_parses (
+CREATE TABLE IF NOT EXISTS menu_parses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     image_id UUID NOT NULL REFERENCES images(id) ON DELETE CASCADE,
     raw_text TEXT NOT NULL,

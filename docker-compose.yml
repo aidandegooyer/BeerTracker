@@ -4,51 +4,78 @@ services:
   db:
     image: postgres:15-alpine
     container_name: beertracker-db
+    restart: always
     environment:
-      POSTGRES_USER: beertracker
-      POSTGRES_PASSWORD: beertracker_dev
-      POSTGRES_DB: beertracker
+      POSTGRES_USER: ${DB_USER:-beertracker}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-beertracker}
     volumes:
-      - db-data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U beertracker"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
+      - postgresdata:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - beertracker
 
-  app:
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: beertracker-app
+    container_name: beertracker-backend
+    restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://beertracker:beertracker_dev@db:5432/beertracker
+      DATABASE_URL: postgresql://${DB_USER:-beertracker}:${DB_PASSWORD}@db:5432/${DB_NAME:-beertracker}
       PORT: 3000
+      AUTH_USERNAME: ${AUTH_USERNAME}
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+      CORS_ORIGIN: ${CORS_ORIGIN}
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app
-      - /app/node_modules
       - uploads:/app/uploads
     depends_on:
-      db:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-          cpus: '0.5'
-    command: npm start
+      - db
+    networks:
+      - beertracker
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/beers', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: beertracker-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - beertracker
+    volumes:
+      # Mount SSL certificates if using Let's Encrypt
+      - ./ssl/certbot/conf:/etc/letsencrypt:ro
+      - ./ssl/certbot/www:/var/www/certbot:ro
+
+  # Optional: Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot
+    container_name: beertracker-certbot
+    volumes:
+      - ./ssl/certbot/conf:/etc/letsencrypt
+      - ./ssl/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  beertracker:
+    driver: bridge
 
 volumes:
-  db-data:
   uploads:
+  postgresdata:

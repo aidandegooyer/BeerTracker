@@ -50,3 +50,4 @@ tmp/
 
 .env.production
 ssl/
+db-data/
