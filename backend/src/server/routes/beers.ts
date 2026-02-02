@@ -21,6 +21,7 @@ interface CreateBeerBody {
   description?: string;
   container?: 'draught' | 'can' | 'bottle';
   abv?: number;
+  verified?: boolean;
 }
 
 interface UpdateBeerBody extends Partial<CreateBeerBody> {}
@@ -116,7 +117,7 @@ export async function createBeer(
   request: FastifyRequest<{ Body: CreateBeerBody }>,
   reply: FastifyReply
 ): Promise<any> {
-  const { brand, name, type, description, container, abv } = request.body;
+  const { brand, name, type, description, container, abv, verified = false } = request.body;
   
   if (!brand || !name) {
     reply.code(400);
@@ -124,8 +125,8 @@ export async function createBeer(
   }
   
   const query = `
-    INSERT INTO beers (brand, name, type, description, container, abv)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO beers (brand, name, type, description, container, abv, verified)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
   `;
   
@@ -135,7 +136,8 @@ export async function createBeer(
     type || null,
     description || null,
     container || null,
-    abv ? parseFloat(String(abv)) : null
+    abv ? parseFloat(String(abv)) : null,
+    verified
   ]);
   
   reply.code(201);
@@ -147,7 +149,7 @@ export async function updateBeer(
   reply: FastifyReply
 ): Promise<any> {
   const { id } = request.params;
-  const { brand, name, type, description, container, abv } = request.body;
+  const { brand, name, type, description, container, abv, verified } = request.body;
   
   const updates: string[] = [];
   const params: any[] = [];
@@ -176,6 +178,10 @@ export async function updateBeer(
   if (abv !== undefined) {
     updates.push(`abv = $${paramCount++}`);
     params.push(abv ? parseFloat(String(abv)) : null);
+  }
+  if (verified !== undefined) {
+    updates.push(`verified = $${paramCount++}`);
+    params.push(verified);
   }
   
   if (updates.length === 0) {

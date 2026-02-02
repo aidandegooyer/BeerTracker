@@ -6,6 +6,7 @@ export interface Beer {
   description: string | null;
   container: 'draught' | 'can' | 'bottle' | null;
   abv: number | null;
+  verified: boolean;
   created_at: Date;
   updated_at: Date;
 }

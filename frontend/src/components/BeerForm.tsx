@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import type { Beer } from "../types";
-import { createBeer, updateBeer, createRating, updateRating } from "../api";
+import {
+  createBeer,
+  updateBeer,
+  createRating,
+  updateRating,
+  deleteBeer,
+} from "../api";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Trash2, CheckCircle, Circle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -39,6 +46,7 @@ export function BeerForm({ beer, open, onClose, onSuccess }: BeerFormProps) {
     container: "",
     abv: "",
     rating: "",
+    verified: false,
   });
 
   // Update form data when beer prop changes
@@ -52,6 +60,7 @@ export function BeerForm({ beer, open, onClose, onSuccess }: BeerFormProps) {
         container: beer.container || "",
         abv: beer.abv?.toString() || "",
         rating: beer.rating?.toString() || "",
+        verified: beer.verified || false,
       });
     } else {
       setFormData({
@@ -62,6 +71,7 @@ export function BeerForm({ beer, open, onClose, onSuccess }: BeerFormProps) {
         container: "",
         abv: "",
         rating: "",
+        verified: false,
       });
     }
   }, [beer, open]);
@@ -81,6 +91,7 @@ export function BeerForm({ beer, open, onClose, onSuccess }: BeerFormProps) {
           (formData.container as "draught" | "can" | "bottle" | "") ||
           undefined,
         abv: formData.abv ? parseFloat(formData.abv) : undefined,
+        verified: formData.verified,
       };
 
       let beerId: string;
@@ -112,6 +123,29 @@ export function BeerForm({ beer, open, onClose, onSuccess }: BeerFormProps) {
       onClose();
     } catch (err: any) {
       setError(err.message || "Failed to save beer");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!beer) return;
+
+    if (
+      !confirm(`Are you sure you want to delete ${beer.brand} ${beer.name}?`)
+    ) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await deleteBeer(beer.id);
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete beer");
     } finally {
       setLoading(false);
     }
@@ -237,6 +271,45 @@ export function BeerForm({ beer, open, onClose, onSuccess }: BeerFormProps) {
               rows={3}
             />
           </div>
+
+          {beer && (
+            <div className="flex items-center justify-between p-4 bg-muted rounded-md">
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    setFormData({ ...formData, verified: !formData.verified })
+                  }
+                >
+                  {formData.verified ? (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <Circle className="h-5 w-5" />
+                  )}
+                </Button>
+                <div>
+                  <Label className="text-sm font-medium">
+                    {formData.verified ? "Verified" : "Not Verified"}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Mark this review as verified (tasted by 2+ people)
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={loading}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </div>
+          )}
 
           {error && (
             <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">

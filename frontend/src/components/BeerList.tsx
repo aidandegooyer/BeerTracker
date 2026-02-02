@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Beer } from "../types";
-import { getBeers, deleteBeer } from "../api";
+import { getBeers, deleteBeer, updateBeer } from "../api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, CheckCircle, Circle } from "lucide-react";
 
 interface BeerListProps {
   onSelectBeer: (beer: Beer) => void;
@@ -73,24 +73,6 @@ export function BeerList({ onSelectBeer, onAddBeer }: BeerListProps) {
     };
     const rounded = Math.round(rating);
     return colors[rounded] || "#6b7280"; // gray fallback
-  };
-
-  const handleDelete = async (e: React.MouseEvent, beer: Beer) => {
-    e.stopPropagation(); // Prevent card click
-
-    if (
-      !confirm(`Are you sure you want to delete ${beer.brand} ${beer.name}?`)
-    ) {
-      return;
-    }
-
-    try {
-      await deleteBeer(beer.id);
-      fetchBeers(searchQuery || undefined);
-    } catch (err) {
-      setError("Failed to delete beer");
-      console.error(err);
-    }
   };
 
   const getSortedBeers = () => {
@@ -190,14 +172,13 @@ export function BeerList({ onSelectBeer, onAddBeer }: BeerListProps) {
                   ) : (
                     <Badge variant="secondary">—</Badge>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={(e) => handleDelete(e, beer)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="h-8 w-8 flex items-center justify-center">
+                    {beer.verified ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
               </div>
             </CardHeader>
