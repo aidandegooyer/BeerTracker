@@ -26,6 +26,7 @@ export function BeerList({ onSelectBeer, onAddBeer }: BeerListProps) {
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
     null,
   );
+  const [sortBy, setSortBy] = useState<"none" | "rating" | "abv">("none");
 
   const fetchBeers = async (query?: string) => {
     setLoading(true);
@@ -62,9 +63,16 @@ export function BeerList({ onSelectBeer, onAddBeer }: BeerListProps) {
   };
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 8) return "bg-green-500";
-    if (rating >= 6) return "bg-amber-500";
-    return "bg-red-500";
+    const colors: { [key: number]: string } = {
+      5: "#ef4444", // red
+      6: "#f97316", // orange
+      7: "#eab308", // yellow
+      8: "#84cc16", // lime
+      9: "#22c55e", // green
+      10: "#10b981", // emerald
+    };
+    const rounded = Math.round(rating);
+    return colors[rounded] || "#6b7280"; // gray fallback
   };
 
   const handleDelete = async (e: React.MouseEvent, beer: Beer) => {
@@ -85,10 +93,44 @@ export function BeerList({ onSelectBeer, onAddBeer }: BeerListProps) {
     }
   };
 
+  const getSortedBeers = () => {
+    const sorted = [...beers];
+    if (sortBy === "rating") {
+      sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+    } else if (sortBy === "abv") {
+      sorted.sort((a, b) => (Number(b.abv) || 0) - (Number(a.abv) || 0));
+    }
+    return sorted;
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="inline justify-between items-center gap-4 md:flex space-y-4">
         <h1 className="text-3xl font-bold">Beer Collection</h1>
+        <div className="flex gap-2 items-center">
+          Sort By:
+          <Button
+            variant={sortBy === "none" ? "default" : "outline"}
+            onClick={() => setSortBy("none")}
+            size="sm"
+          >
+            Default
+          </Button>
+          <Button
+            variant={sortBy === "rating" ? "default" : "outline"}
+            onClick={() => setSortBy("rating")}
+            size="sm"
+          >
+            Rating
+          </Button>
+          <Button
+            variant={sortBy === "abv" ? "default" : "outline"}
+            onClick={() => setSortBy("abv")}
+            size="sm"
+          >
+            ABV
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -121,7 +163,7 @@ export function BeerList({ onSelectBeer, onAddBeer }: BeerListProps) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {beers.map((beer) => (
+        {getSortedBeers().map((beer) => (
           <Card
             key={beer.id}
             className="cursor-pointer transition-all hover:shadow-lg hover:border-primary"
@@ -138,7 +180,10 @@ export function BeerList({ onSelectBeer, onAddBeer }: BeerListProps) {
                 <div className="flex items-center gap-2">
                   {beer.rating ? (
                     <Badge
-                      className={`${getRatingColor(Number(beer.rating))} text-white`}
+                      className="text-white"
+                      style={{
+                        backgroundColor: getRatingColor(Number(beer.rating)),
+                      }}
                     >
                       {Number(beer.rating).toFixed(1)}
                     </Badge>
