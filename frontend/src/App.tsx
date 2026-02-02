@@ -3,10 +3,11 @@ import { BeerList } from "./components/BeerList";
 import { BeerForm } from "./components/BeerForm";
 import { MenuScanner } from "./components/MenuScanner";
 import { LoginForm } from "./components/LoginForm";
+import { CSVUploader } from "./components/CSVUploader";
 import { type Beer } from "./types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Beer as BeerIcon, Camera, Plus, LogOut } from "lucide-react";
+import { Beer as BeerIcon, Camera, Plus, LogOut, Upload } from "lucide-react";
 
 function App() {
   const [authToken, setAuthToken] = useState<string | null>(
@@ -75,7 +76,7 @@ function App() {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="collection" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8">
             <TabsTrigger value="collection" className="gap-2">
               <BeerIcon className="h-4 w-4" />
               Collection
@@ -83,6 +84,10 @@ function App() {
             <TabsTrigger value="scanner" className="gap-2">
               <Camera className="h-4 w-4" />
               Menu Scanner
+            </TabsTrigger>
+            <TabsTrigger value="import" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import CSV
             </TabsTrigger>
           </TabsList>
 
@@ -102,6 +107,25 @@ function App() {
                   console.log("Selected beer:", beerId);
                 }}
               />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="import" className="space-y-6">
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-card rounded-lg border p-6 space-y-4">
+                <div>
+                  <h2 className="text-xl font-semibold mb-2">
+                    Import Beers from CSV
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload a CSV file with columns: Brand, Name, Type,
+                    Description, ABV %, Rating
+                  </p>
+                </div>
+                <CSVUploader
+                  onComplete={() => setRefreshKey((prev) => prev + 1)}
+                />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
